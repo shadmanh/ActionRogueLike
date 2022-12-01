@@ -10,6 +10,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UValInteractionComponent;
 class UAnimMontage;
+class UValAttributeComponent;
 
 UCLASS()
 class ACTIONROGUELIKE_API AValCharacter : public ACharacter
@@ -40,12 +41,16 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	UValInteractionComponent* InteractionComp;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UValAttributeComponent* AttributeComp;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+	FVector GetLocationBeingLookedAt();
 	void PrimaryAttack();
 	void PrimaryAttack_TimeElapsed();
 	void PrimaryInteract();

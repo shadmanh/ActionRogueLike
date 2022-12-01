@@ -7,6 +7,8 @@
 #include "DrawDebugHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "ValInteractionComponent.h"
+#include "ValAttributeComponent.h"
+#include <Kismet/KismetMathLibrary.h>
 
 
 // Sets default values
@@ -23,6 +25,8 @@ AValCharacter::AValCharacter()
 	CameraComp->SetupAttachment(SpringArmComp);
 
 	InteractionComp = CreateDefaultSubobject<UValInteractionComponent>("InteractionComp");
+
+	AttributeComp = CreateDefaultSubobject<UValAttributeComponent>("AttributeComp");
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
@@ -60,26 +64,75 @@ void AValCharacter::MoveRight(float Value)
 	AddMovementInput(RightVector, Value);
 }
 
+FVector AValCharacter::GetLocationBeingLookedAt() {
+	
+	// How far to trace before giving up on finding a hit
+	float FallOffDistance = 10000.f;
+	
+	FVector TraceBegin;
+	FVector TraceEnd;
+
+	// get the camera view
+	FVector CameraLoc = CameraComp->GetComponentLocation();
+	FRotator CameraRot = CameraComp->GetComponentRotation();
+	TraceBegin = CameraLoc;
+	TraceEnd = CameraLoc + (CameraRot.Vector() * FallOffDistance);
+
+	// Object Query Parameters
+	FCollisionObjectQueryParams ObjectsToHit;
+	ObjectsToHit.AddObjectTypesToQuery(ECC_WorldStatic);
+	ObjectsToHit.AddObjectTypesToQuery(ECC_PhysicsBody);
+	ObjectsToHit.AddObjectTypesToQuery(ECC_Vehicle);
+	ObjectsToHit.AddObjectTypesToQuery(ECC_Destructible);
+
+	const FName CameraTraceTag("CameraTrace");
+
+	// additional trace parameters
+	FCollisionQueryParams TraceParams(CameraTraceTag, true, NULL);
+	TraceParams.bTraceComplex = true;
+
+	GetWorld()->DebugDrawTraceTag = CameraTraceTag;
+
+	//Re-initialize hit info
+	FHitResult HitDetails = FHitResult(ForceInit);
+	bool bIsHit = GetWorld()->LineTraceSingleByObjectType(HitDetails,
+		TraceBegin, TraceEnd, ObjectsToHit, TraceParams);	
+
+	if (bIsHit)
+	{
+		return HitDetails.ImpactPoint;
+	}
+	else
+	{
+		return TraceEnd;
+	}
+}
+
 void AValCharacter::PrimaryAttack()
 {
 	PlayAnimMontage(AttackAnim);
 
 	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this,
 		&AValCharacter::PrimaryAttack_TimeElapsed, 0.2f);
-
 }
 
 void AValCharacter::PrimaryAttack_TimeElapsed()
 {
-	FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+	if (ensure(ProjectileClass))
+	{
+		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+		FVector TargetLocation = GetLocationBeingLookedAt();
 
-	FTransform SpawnTM = FTransform(GetControlRotation(), HandLocation);
-	
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SpawnParams.Instigator = this;
+		FRotator ProjectileRot = UKismetMathLibrary::FindLookAtRotation(HandLocation, TargetLocation);
 
-	GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+		FTransform SpawnTM = FTransform(ProjectileRot, HandLocation);
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParams.Instigator = this;
+
+		GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+	}
 }
 
 void AValCharacter::PrimaryInteract()
