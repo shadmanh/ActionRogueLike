@@ -65,10 +65,7 @@ void AValCharacter::MoveRight(float Value)
 }
 
 FVector AValCharacter::GetLocationBeingLookedAt() {
-	
-	// How far to trace before giving up on finding a hit
-	float FallOffDistance = 10000.f;
-	
+		
 	FVector TraceBegin;
 	FVector TraceEnd;
 
@@ -110,16 +107,30 @@ FVector AValCharacter::GetLocationBeingLookedAt() {
 
 void AValCharacter::PrimaryAttack()
 {
-	PlayAnimMontage(AttackAnim);
-
-	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this,
-		&AValCharacter::PrimaryAttack_TimeElapsed, 0.2f);
+	TimerDel.BindUFunction(this, FName("Attack_TimeElapsed"), DamageProjectileClass);
+	PreAttack();
 }
 
-void AValCharacter::PrimaryAttack_TimeElapsed()
+void AValCharacter::SecondaryAttack()
 {
-	if (ensure(ProjectileClass))
+	TimerDel.BindUFunction(this, FName("Attack_TimeElapsed"), GravityProjectileClass);
+	PreAttack();
+}
+
+void AValCharacter::PreAttack()
+{	
+	PlayAnimMontage(AttackAnim);
+	GetWorldTimerManager().SetTimer(TimerHandle_Attack, TimerDel, 0.2f, false);
+}
+
+void AValCharacter::Attack_TimeElapsed(UClass* ChosenProjectileClass)
+{
+	if (ensure(ChosenProjectileClass))
 	{
+		// The teleport projectile travels a short distance before stopping, so its falloff
+		// distance is much smaller
+		FallOffDistance = ChosenProjectileClass == TeleportProjectileClass ? 700.f : 10000.f;
+
 		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
 		FVector TargetLocation = GetLocationBeingLookedAt();
 
@@ -131,7 +142,7 @@ void AValCharacter::PrimaryAttack_TimeElapsed()
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		SpawnParams.Instigator = this;
 
-		GetWorld()->SpawnActor<AActor>(ProjectileClass, SpawnTM, SpawnParams);
+		GetWorld()->SpawnActor<AActor>(ChosenProjectileClass, SpawnTM, SpawnParams);
 	}
 }
 
@@ -140,6 +151,12 @@ void AValCharacter::PrimaryInteract()
 	if (InteractionComp) {
 		InteractionComp->PrimaryInteract();
 	}
+}
+
+void AValCharacter::TeleportAbility()
+{
+	TimerDel.BindUFunction(this, FName("Attack_TimeElapsed"), TeleportProjectileClass);
+	PreAttack();	
 }
 
 // Called every frame
@@ -176,7 +193,9 @@ void AValCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &AValCharacter::PrimaryAttack);
+	PlayerInputComponent->BindAction("SecondaryAttack", IE_Pressed, this, &AValCharacter::SecondaryAttack);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &AValCharacter::PrimaryInteract);
+	PlayerInputComponent->BindAction("MovementAbility", IE_Pressed, this, &AValCharacter::TeleportAbility);
 }
 

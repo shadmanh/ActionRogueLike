@@ -20,12 +20,23 @@ class ACTIONROGUELIKE_API AValCharacter : public ACharacter
 protected:
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> ProjectileClass;
+	TSubclassOf<AActor> DamageProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<AActor> GravityProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<AActor> TeleportProjectileClass;
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	UAnimMontage* AttackAnim;
 
-	FTimerHandle TimerHandle_PrimaryAttack;
+	FTimerHandle TimerHandle_Attack;
+
+	FTimerDelegate TimerDel;
+
+	// How far to trace before giving up on finding a hit
+	float FallOffDistance = 10000.f;
 
 public:
 	// Sets default values for this character's properties
@@ -52,8 +63,15 @@ protected:
 	void MoveRight(float Value);
 	FVector GetLocationBeingLookedAt();
 	void PrimaryAttack();
-	void PrimaryAttack_TimeElapsed();
+	void SecondaryAttack();
+	void PreAttack();
+	
+	UFUNCTION()
+	void Attack_TimeElapsed(UClass* ChosenProjectileClass);
+
 	void PrimaryInteract();
+
+	void TeleportAbility();
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
