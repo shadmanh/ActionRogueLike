@@ -9,6 +9,8 @@
 class USphereComponent;
 class UProjectileMovementComponent;
 class UParticleSystemComponent;
+class UAudioComponent;
+class UCameraShake;
 
 UCLASS()
 class ACTIONROGUELIKE_API AValMagicProjectile : public AActor
@@ -32,6 +34,15 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UParticleSystemComponent* EffectComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UAudioComponent* LoopingSound;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UAudioComponent* ImpactSound;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UCameraShake> ShakeEffect;
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

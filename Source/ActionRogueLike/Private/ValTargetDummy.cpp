@@ -14,7 +14,7 @@ AValTargetDummy::AValTargetDummy()
 	AttributeComp = CreateDefaultSubobject<UValAttributeComponent>("AttributeComp");
 
 	// Trigger when health is changed (damage/healing)
-	AttributeComp->onHealthChanged.AddDynamic(this, &AValTargetDummy::onHealthChanged);
+	AttributeComp->OnHealthChanged.AddDynamic(this, &AValTargetDummy::onHealthChanged);
 
 }
 

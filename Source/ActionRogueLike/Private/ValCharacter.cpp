@@ -6,9 +6,11 @@
 #include "Camera/CameraComponent.h"
 #include "DrawDebugHelpers.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "ValInteractionComponent.h"
 #include "ValAttributeComponent.h"
 #include <Kismet/KismetMathLibrary.h>
+#include <Kismet/GameplayStatics.h>
 
 
 // Sets default values
@@ -31,6 +33,13 @@ AValCharacter::AValCharacter()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	bUseControllerRotationYaw = false;
+}
+
+void AValCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	AttributeComp->OnHealthChanged.AddDynamic(this, &AValCharacter::OnHealthChanged);
 }
 
 // Called when the game starts or when spawned
@@ -72,15 +81,20 @@ FVector AValCharacter::GetLocationBeingLookedAt() {
 	// get the camera view
 	FVector CameraLoc = CameraComp->GetComponentLocation();
 	FRotator CameraRot = CameraComp->GetComponentRotation();
-	TraceBegin = CameraLoc;
+	TraceBegin = CameraLoc + (CameraRot.Vector() * 200);
 	TraceEnd = CameraLoc + (CameraRot.Vector() * FallOffDistance);
+
+	FCollisionShape Shape;
+	Shape.SetSphere(20.0f);
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
 
 	// Object Query Parameters
 	FCollisionObjectQueryParams ObjectsToHit;
+	ObjectsToHit.AddObjectTypesToQuery(ECC_WorldDynamic);
 	ObjectsToHit.AddObjectTypesToQuery(ECC_WorldStatic);
-	ObjectsToHit.AddObjectTypesToQuery(ECC_PhysicsBody);
-	ObjectsToHit.AddObjectTypesToQuery(ECC_Vehicle);
-	ObjectsToHit.AddObjectTypesToQuery(ECC_Destructible);
+	ObjectsToHit.AddObjectTypesToQuery(ECC_Pawn);
 
 	const FName CameraTraceTag("CameraTrace");
 
@@ -92,8 +106,8 @@ FVector AValCharacter::GetLocationBeingLookedAt() {
 
 	//Re-initialize hit info
 	FHitResult HitDetails = FHitResult(ForceInit);
-	bool bIsHit = GetWorld()->LineTraceSingleByObjectType(HitDetails,
-		TraceBegin, TraceEnd, ObjectsToHit, TraceParams);	
+	bool bIsHit = GetWorld()->SweepSingleByObjectType(HitDetails,
+		TraceBegin, TraceEnd, FQuat::Identity, ObjectsToHit, Shape, TraceParams);
 
 	if (bIsHit)
 	{
@@ -119,8 +133,20 @@ void AValCharacter::SecondaryAttack()
 
 void AValCharacter::PreAttack()
 {	
+	FName HandSocketName = FName("Muzzle_01");
+	FVector HandLocation = GetMesh()->GetSocketLocation(HandSocketName);
+	//FVector HandLocation = FVector(0, 0, 500);
+	FRotator HandRotation = GetMesh()->GetSocketRotation(HandSocketName);
+	FTransform SpawnTM = FTransform(HandRotation, HandLocation);
+	
+	UGameplayStatics::SpawnEmitterAttached(ProjectileSpawnFX, GetMesh(), HandSocketName,
+		FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget);
+	
+	//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ProjectileSpawnFX, SpawnTM);
+	
 	PlayAnimMontage(AttackAnim);
 	GetWorldTimerManager().SetTimer(TimerHandle_Attack, TimerDel, 0.2f, false);
+		
 }
 
 void AValCharacter::Attack_TimeElapsed(UClass* ChosenProjectileClass)
@@ -149,7 +175,11 @@ void AValCharacter::Attack_TimeElapsed(UClass* ChosenProjectileClass)
 void AValCharacter::PrimaryInteract()
 {
 	if (InteractionComp) {
-		InteractionComp->PrimaryInteract();
+		
+		// The interact distance shouldn't be too large
+		FallOffDistance = 1000.f;
+		
+		InteractionComp->PrimaryInteract(GetLocationBeingLookedAt());
 	}
 }
 
@@ -157,6 +187,20 @@ void AValCharacter::TeleportAbility()
 {
 	TimerDel.BindUFunction(this, FName("Attack_TimeElapsed"), TeleportProjectileClass);
 	PreAttack();	
+}
+
+void AValCharacter::OnHealthChanged(AActor* InstigatorActor, UValAttributeComponent* OwningComp, float NewHealth, float Delta)
+{
+	if (Delta < 0.0f)
+	{
+		GetMesh()->SetScalarParameterValueOnMaterials("TimeToHit", GetWorld()->TimeSeconds);
+		
+		if (NewHealth <= 0.0f)
+		{
+			APlayerController* PC = Cast<APlayerController>(GetController());
+			DisableInput(PC);
+		}
+	}
 }
 
 // Called every frame
@@ -197,5 +241,10 @@ void AValCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &AValCharacter::PrimaryInteract);
 	PlayerInputComponent->BindAction("MovementAbility", IE_Pressed, this, &AValCharacter::TeleportAbility);
+}
+
+UValAttributeComponent* AValCharacter::GetAttributeComp()
+{
+	return AttributeComp;
 }
 

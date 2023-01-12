@@ -34,7 +34,7 @@ void UValInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	// ...
 }
 
-void UValInteractionComponent::PrimaryInteract()
+void UValInteractionComponent::PrimaryInteract(FVector LookingAtLocation)
 {
 	FCollisionObjectQueryParams ObjectQueryParams;
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
@@ -45,7 +45,7 @@ void UValInteractionComponent::PrimaryInteract()
 	FRotator EyeRotation;
 	MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
 
-	FVector End = EyeLocation + (EyeRotation.Vector() * 1000);
+	FVector End = LookingAtLocation;
 	
 	//FHitResult Hit;
 	//bool bBlockingHit = GetWorld()->LineTraceSingleByObjectType(Hit, EyeLocation, End, ObjectQueryParams);

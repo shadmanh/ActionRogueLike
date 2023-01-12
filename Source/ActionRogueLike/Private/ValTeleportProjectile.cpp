@@ -62,7 +62,7 @@ void AValTeleportProjectile::Detonate()
 void AValTeleportProjectile::Teleport()
 {
 	if (ensure(GetInstigator())) {
-		GetInstigator()->SetActorLocation(this->GetActorLocation());
+		GetInstigator()->TeleportTo(this->GetActorLocation(), GetInstigator()->GetActorRotation());
 	}
 
 	Destroy();

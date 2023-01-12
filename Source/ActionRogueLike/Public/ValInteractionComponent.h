@@ -16,7 +16,7 @@ public:
 	// Sets default values for this component's properties
 	UValInteractionComponent();
 
-	void PrimaryInteract();
+	void PrimaryInteract(FVector LookingAtLocation);
 
 protected:
 	// Called when the game starts

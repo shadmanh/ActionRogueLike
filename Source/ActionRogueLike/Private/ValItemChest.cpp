@@ -19,20 +19,6 @@ AValItemChest::AValItemChest()
 	TargetPitch = 110.0f;
 }
 
-// Called when the game starts or when spawned
-void AValItemChest::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}
-
-// Called every frame
-void AValItemChest::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
 void AValItemChest::Interact_Implementation(APawn* InstigatorPawn)
 {
 	LidMesh->SetRelativeRotation(FRotator(TargetPitch, 0, 0));

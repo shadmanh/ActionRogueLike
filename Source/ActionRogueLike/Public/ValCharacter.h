@@ -8,6 +8,7 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class UParticleSystem;
 class UValInteractionComponent;
 class UAnimMontage;
 class UValAttributeComponent;
@@ -30,6 +31,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	UAnimMontage* AttackAnim;
+	
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* ProjectileSpawnFX;
 
 	FTimerHandle TimerHandle_Attack;
 
@@ -72,11 +76,19 @@ protected:
 	void PrimaryInteract();
 
 	void TeleportAbility();
+	
+	UFUNCTION()
+	void OnHealthChanged(AActor* InstigatorActor, UValAttributeComponent* OwningComp,
+		float NewHealth, float Delta);
+
+	virtual void PostInitializeComponents() override;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	virtual UValAttributeComponent* GetAttributeComp();
 
 };

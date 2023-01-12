@@ -2,10 +2,13 @@
 
 
 #include "ValMagicProjectile.h"
+#include "Camera/CameraShake.h"
 #include "Components/SphereComponent.h"
+#include "Components/AudioComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Particles/ParticleSystemComponent.h"
 #include "ValAttributeComponent.h"
+#include <Kismet/GameplayStatics.h>
 
 // Sets default values
 AValMagicProjectile::AValMagicProjectile()
@@ -26,6 +29,10 @@ AValMagicProjectile::AValMagicProjectile()
 	MovementComp->bRotationFollowsVelocity = true;
 	MovementComp->bInitialVelocityInLocalSpace = true;
 
+	LoopingSound = CreateDefaultSubobject <UAudioComponent>("LoopingSound");
+	LoopingSound->SetupAttachment(RootComponent);
+	ImpactSound = CreateDefaultSubobject <UAudioComponent>("ImpactSound");
+	
 }
 
 void AValMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -35,7 +42,11 @@ void AValMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponen
 		UValAttributeComponent* AttributeComp = Cast<UValAttributeComponent>(OtherActor->GetComponentByClass(UValAttributeComponent::StaticClass()));
 		if (AttributeComp)
 		{
-			AttributeComp->ApplyHealthChange(-20.0f);
+			AttributeComp->ApplyHealthChange(GetInstigator(), -20.0f);
+
+			UGameplayStatics::PlaySoundAtLocation(this, ImpactSound->Sound, GetActorLocation());
+
+			UGameplayStatics::PlayWorldCameraShake(this, ShakeEffect, GetActorLocation(), 0, 1000.f);
 
 			Destroy();
 		}
