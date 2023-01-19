@@ -8,6 +8,8 @@
 
 class UPawnSensingComponent;
 class UValAttributeComponent;
+class UUserWidget;
+class UValWorldUserWidget;
 
 UCLASS()
 class ACTIONROGUELIKE_API AValAICharacter : public ACharacter
@@ -18,6 +20,11 @@ public:
 	AValAICharacter();
 
 protected:
+
+	UValWorldUserWidget* ActiveHealthBar;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> HealthBarWidgetClass;
 
 	UPROPERTY(VisibleAnywhere, Category = "Effects")
 	FName TimeToHitParamName;

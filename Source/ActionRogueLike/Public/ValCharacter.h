@@ -91,4 +91,7 @@ public:
 
 	virtual UValAttributeComponent* GetAttributeComp();
 
+	UFUNCTION(Exec)
+	void HealSelf(float Amount = 100);
+
 };

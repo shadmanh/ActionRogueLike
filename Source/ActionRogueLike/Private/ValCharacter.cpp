@@ -248,3 +248,8 @@ UValAttributeComponent* AValCharacter::GetAttributeComp()
 	return AttributeComp;
 }
 
+void AValCharacter::HealSelf(float Amount /* = 100 */)
+{
+	AttributeComp->ApplyHealthChange(this, Amount);
+}
+

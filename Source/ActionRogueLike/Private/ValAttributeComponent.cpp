@@ -2,6 +2,9 @@
 
 
 #include "ValAttributeComponent.h"
+#include "ValGameModeBase.h"
+
+static TAutoConsoleVariable<float> CVarDamageMultiplier(TEXT("val,DamageMultiplier"), 1.0f, TEXT("Global Damage Modifier for Attribute Component."), ECVF_Cheat);
 
 // Sets default values for this component's properties
 UValAttributeComponent::UValAttributeComponent()
@@ -53,6 +56,11 @@ bool UValAttributeComponent::IsFullHealth(AActor* Actor)
 	return false;
 }
 
+bool UValAttributeComponent::Kill(AActor* InstigatorActor)
+{
+	return ApplyHealthChange(InstigatorActor, -HealthMax);
+}
+
 bool UValAttributeComponent::IsAlive() const
 {
 	return Health > 0.0f;
@@ -60,12 +68,37 @@ bool UValAttributeComponent::IsAlive() const
 
 bool UValAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delta)
 {
+	if (!GetOwner()->CanBeDamaged())
+	{
+		return false;
+	}
+
+	if (Delta < 0.0f)
+	{
+		float DamageMultiplier = CVarDamageMultiplier.GetValueOnGameThread();
+
+		Delta *= DamageMultiplier;
+	}
+
+	float OldHealth = Health;
+
 	Health = FMath::Clamp(Health+Delta, 0.0f , HealthMax);
 
+	float ActualDelta = Health - OldHealth;
 	OnHealthChanged.Broadcast(InstigatorActor, this, Health, Delta);
 		
 	UE_LOG(LogTemp, Log, TEXT("Health is % f"), Health);
 	
+	// Died
+	if (ActualDelta < 0.0f && Health == 0.0f)
+	{
+		AValGameModeBase* GM = GetWorld()->GetAuthGameMode<AValGameModeBase>();
+		if (GM)
+		{
+			GM->OnActorKilled(GetOwner(), InstigatorActor);
+		}
+	}
+
 	return true;
 }
 

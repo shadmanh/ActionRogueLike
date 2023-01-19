@@ -9,6 +9,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "ValAttributeComponent.h"
 #include <Kismet/GameplayStatics.h>
+#include "ValGameplayFunctionLibrary.h"
 
 // Sets default values
 AValMagicProjectile::AValMagicProjectile()
@@ -39,10 +40,23 @@ void AValMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponen
 {
 	if (OtherActor && OtherActor != GetInstigator())
 	{
+		/*
 		UValAttributeComponent* AttributeComp = Cast<UValAttributeComponent>(OtherActor->GetComponentByClass(UValAttributeComponent::StaticClass()));
 		if (AttributeComp)
 		{
 			AttributeComp->ApplyHealthChange(GetInstigator(), -20.0f);
+
+			UGameplayStatics::PlaySoundAtLocation(this, ImpactSound->Sound, GetActorLocation());
+
+			UGameplayStatics::PlayWorldCameraShake(this, ShakeEffect, GetActorLocation(), 0, 1000.f);
+
+			Destroy();
+		}
+		*/
+
+		if (UValGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor,
+			20.f, SweepResult))
+		{
 
 			UGameplayStatics::PlaySoundAtLocation(this, ImpactSound->Sound, GetActorLocation());
 

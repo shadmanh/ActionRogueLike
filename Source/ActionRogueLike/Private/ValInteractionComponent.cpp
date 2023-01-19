@@ -5,6 +5,8 @@
 #include "ValGameplayInterface.h"
 #include <DrawDebugHelpers.h>
 
+static TAutoConsoleVariable<bool> CVarDebugDrawInteraction(TEXT("val.InteractionDebugDraw"), false, TEXT("Enable Debug Lines for Interact Component."), ECVF_Cheat);
+
 // Sets default values for this component's properties
 UValInteractionComponent::UValInteractionComponent()
 {
@@ -36,6 +38,8 @@ void UValInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 void UValInteractionComponent::PrimaryInteract(FVector LookingAtLocation)
 {
+	bool bDebugDraw = CVarDebugDrawInteraction.GetValueOnGameThread();
+
 	FCollisionObjectQueryParams ObjectQueryParams;
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
 
@@ -46,7 +50,7 @@ void UValInteractionComponent::PrimaryInteract(FVector LookingAtLocation)
 	MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
 
 	FVector End = LookingAtLocation;
-	
+
 	//FHitResult Hit;
 	//bool bBlockingHit = GetWorld()->LineTraceSingleByObjectType(Hit, EyeLocation, End, ObjectQueryParams);
 
@@ -60,7 +64,13 @@ void UValInteractionComponent::PrimaryInteract(FVector LookingAtLocation)
 	bool bBlockingHit = GetWorld()->SweepMultiByObjectType(Hits, EyeLocation, End, FQuat::Identity, ObjectQueryParams, Shape);
 	FColor LineColor = bBlockingHit ? FColor::Green : FColor::Red;
 
-	for (FHitResult Hit : Hits) {
+	for (FHitResult Hit : Hits)
+	{
+		if (bDebugDraw)
+		{
+			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32, LineColor, false, 2.0f);
+		}
+
 		AActor* HitActor = Hit.GetActor();
 		if (HitActor) {
 
@@ -68,10 +78,14 @@ void UValInteractionComponent::PrimaryInteract(FVector LookingAtLocation)
 				APawn* MyPawn = Cast<APawn>(MyOwner);
 
 				IValGameplayInterface::Execute_Interact(HitActor, MyPawn);
-				DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32, LineColor, false, 2.0f);
+
 				break;
 			}
 		}
 	}
-	DrawDebugLine(GetWorld(), EyeLocation, End, LineColor, false, 2.0f, 0, 2.0f);
+
+	if (bDebugDraw)
+	{
+		DrawDebugLine(GetWorld(), EyeLocation, End, LineColor, false, 2.0f, 0, 2.0f);
+	}
 }

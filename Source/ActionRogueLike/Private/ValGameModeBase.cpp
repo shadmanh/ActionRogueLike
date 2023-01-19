@@ -9,10 +9,31 @@
 #include "ValAttributeComponent.h"
 #include <EngineUtils.h>
 #include <DrawDebugHelpers.h>
+#include "ValCharacter.h"
+
+static TAutoConsoleVariable<bool> CVarSpawnBots(TEXT("val.SpawnBots"), true, TEXT("Enable spawning of bots via timer."), ECVF_Cheat);
 
 AValGameModeBase::AValGameModeBase()
 {
 	SpawnTimerInterval = 2.0f;
+}
+
+void AValGameModeBase::OnActorKilled(AActor* VictimActor, AActor* Killer)
+{
+	AValCharacter* Player = Cast<AValCharacter>(VictimActor);
+	if (Player)
+	{
+		FTimerHandle TimerHandle_RespawnDelay;
+
+		FTimerDelegate Delegate;
+		Delegate.BindUFunction(this, "RespawnPlayerElapsed", Player->GetController());
+
+		float RespawnDelay = 2.0f;
+		GetWorldTimerManager().SetTimer(TimerHandle_RespawnDelay, Delegate, RespawnDelay, false);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("OnActorKilled: Victim: %s, Killer: %s"), *GetNameSafe(VictimActor),
+		*GetNameSafe(Killer));
 }
 
 void AValGameModeBase::StartPlay()
@@ -25,8 +46,28 @@ void AValGameModeBase::StartPlay()
 
 }
 
+void AValGameModeBase::KillAll()
+{
+	for (TActorIterator<AValAICharacter> It(GetWorld()); It; ++It)
+	{
+		AValAICharacter* Bot = *It;
+
+		UValAttributeComponent* AttributeComp = UValAttributeComponent::GetAttributes(Bot);
+		if (ensure(AttributeComp) && AttributeComp->IsAlive())
+		{
+			AttributeComp->Kill(this); // @fixme: pass in player? for kill credit
+		}
+	}	
+}
+
 void AValGameModeBase::SpawnBotTimerElapsed()
 {
+	if (!CVarSpawnBots.GetValueOnGameThread())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Bot spawning disabled via cvar 'CVarSpawnBots'."));
+		return;
+	}
+
 	int32 NrOfAliveBots = 0;
 	for (TActorIterator<AValAICharacter> It(GetWorld()); It; ++It)
 	{
@@ -79,5 +120,15 @@ void AValGameModeBase::OnQueryCompleted(UEnvQueryInstanceBlueprintWrapper* Query
 
 		// Track all the used spawn locations
 		DrawDebugSphere(GetWorld(), Locations[0], 50.0f, 20, FColor::Blue, false, 60.0f);
+	}
+}
+
+void AValGameModeBase::RespawnPlayerElapsed(AController* Controller)
+{
+	if (ensure(Controller))
+	{
+		Controller->UnPossess();
+
+		RestartPlayer(Controller);
 	}
 }

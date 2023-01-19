@@ -8,6 +8,8 @@
 #include <DrawDebugHelpers.h>
 #include "ValAttributeComponent.h"
 #include "BrainComponent.h"
+#include "ValWorldUserWidget.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
 AValAICharacter::AValAICharacter()
@@ -18,6 +20,9 @@ AValAICharacter::AValAICharacter()
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Ignore);
+	GetMesh()->SetGenerateOverlapEvents(true);
+
 	TimeToHitParamName = "TimeToHit";
 }
 
@@ -38,6 +43,16 @@ void AValAICharacter::OnHealthChanged(AActor* InstigatorActor, UValAttributeComp
 		if (InstigatorActor != this)
 		{
 			SetTargetActor(InstigatorActor);
+		}
+
+		if (ActiveHealthBar == nullptr)
+		{	
+			ActiveHealthBar = CreateWidget<UValWorldUserWidget>(GetWorld(), HealthBarWidgetClass);
+			if (ActiveHealthBar)
+			{
+				ActiveHealthBar->AttachedActor = this;
+				ActiveHealthBar->AddToViewport();
+			}
 		}
 
 		GetMesh()->SetScalarParameterValueOnMaterials("TimeToHit", GetWorld()->TimeSeconds);
