@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "ValGameplayInterface.h"
+#include "Collectible.h"
 #include "HealthPotion.generated.h"
 
 UCLASS()
-class ACTIONROGUELIKE_API AHealthPotion : public AActor, public IValGameplayInterface
+class ACTIONROGUELIKE_API AHealthPotion : public ACollectible
 {
 	GENERATED_BODY()
 	
@@ -17,21 +17,13 @@ public:
 	AHealthPotion();
 
 protected:
-	float HealAmount = 50.f;
-	bool IsActive = true;
+	UPROPERTY(EditDefaultsOnly)
+	float HealAmount;
 	
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* BaseMesh;
+	UPROPERTY(EditDefaultsOnly)
+	int CostToUse;
 
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-	
-	void Interact_Implementation(APawn* InstigatorPawn) override;
-
-	void SetActive();
+public:		
+	virtual bool DoEffect(AValCharacter* Player) override;
 
 };

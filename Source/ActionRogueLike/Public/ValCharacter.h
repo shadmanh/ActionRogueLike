@@ -12,6 +12,7 @@ class UParticleSystem;
 class UValInteractionComponent;
 class UAnimMontage;
 class UValAttributeComponent;
+class UValActionComponent;
 
 UCLASS()
 class ACTIONROGUELIKE_API AValCharacter : public ACharacter
@@ -19,25 +20,6 @@ class ACTIONROGUELIKE_API AValCharacter : public ACharacter
 	GENERATED_BODY()
 
 protected:
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> DamageProjectileClass;
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> GravityProjectileClass;
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> TeleportProjectileClass;
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	UAnimMontage* AttackAnim;
-	
-	UPROPERTY(EditAnywhere)
-	UParticleSystem* ProjectileSpawnFX;
-
-	FTimerHandle TimerHandle_Attack;
-
-	FTimerDelegate TimerDel;
 
 	// How far to trace before giving up on finding a hit
 	float FallOffDistance = 10000.f;
@@ -60,6 +42,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UValAttributeComponent* AttributeComp;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UValActionComponent* ActionComp;
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -68,10 +53,8 @@ protected:
 	FVector GetLocationBeingLookedAt();
 	void PrimaryAttack();
 	void SecondaryAttack();
-	void PreAttack();
-	
-	UFUNCTION()
-	void Attack_TimeElapsed(UClass* ChosenProjectileClass);
+	void SprintStart();
+	void SprintStop();	
 
 	void PrimaryInteract();
 
@@ -82,6 +65,8 @@ protected:
 		float NewHealth, float Delta);
 
 	virtual void PostInitializeComponents() override;
+
+	virtual FVector GetPawnViewLocation() const override;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -93,5 +78,14 @@ public:
 
 	UFUNCTION(Exec)
 	void HealSelf(float Amount = 100);
+	
+	UFUNCTION(BlueprintCallable)
+	void GrantCredits(int CreditAmount);
+
+	UFUNCTION(BlueprintCallable)
+	int GetCredits();
+
+	UFUNCTION(BlueprintCallable)
+	bool DeductCredits(int CreditAmount);
 
 };

@@ -24,22 +24,41 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	TSubclassOf<AActor> MinionClass;
 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AActor> HealthPotionClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AActor> CoinClass;
+
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	UEnvQuery* SpawnBotQuery;
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	UCurveFloat* DifficultyCurve;
 		
+	UPROPERTY(EditDefaultsOnly)
+	UEnvQuery* SpawnCollectibleQuery;
+	
+	UPROPERTY(EditDefaultsOnly)
+	int NumPotionsAndCreditsToSpawn;
+
 	FTimerHandle TimerHandle_SpawnBots;
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	float SpawnTimerInterval;
 
 	UFUNCTION()
+	void SpawnCollectibles();
+
+	UFUNCTION()
 	void SpawnBotTimerElapsed();
 
 	UFUNCTION()
-	void OnQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
+	void OnSpawnBotQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
+		EEnvQueryStatus::Type QueryStatus);
+
+	UFUNCTION()
+	void OnSpawnCollectibleQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance,
 		EEnvQueryStatus::Type QueryStatus);
 
 	UFUNCTION()

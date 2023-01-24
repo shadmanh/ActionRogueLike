@@ -5,7 +5,7 @@
 #include "ValGameplayInterface.h"
 #include <DrawDebugHelpers.h>
 
-static TAutoConsoleVariable<bool> CVarDebugDrawInteraction(TEXT("val.InteractionDebugDraw"), false, TEXT("Enable Debug Lines for Interact Component."), ECVF_Cheat);
+static TAutoConsoleVariable<bool> CVarDebugDrawInteraction(TEXT("val.InteractionDebugDraw"), true, TEXT("Enable Debug Lines for Interact Component."), ECVF_Cheat);
 
 // Sets default values for this component's properties
 UValInteractionComponent::UValInteractionComponent()

@@ -16,6 +16,7 @@ static TAutoConsoleVariable<bool> CVarSpawnBots(TEXT("val.SpawnBots"), true, TEX
 AValGameModeBase::AValGameModeBase()
 {
 	SpawnTimerInterval = 2.0f;
+	NumPotionsAndCreditsToSpawn = 10;
 }
 
 void AValGameModeBase::OnActorKilled(AActor* VictimActor, AActor* Killer)
@@ -32,6 +33,17 @@ void AValGameModeBase::OnActorKilled(AActor* VictimActor, AActor* Killer)
 		GetWorldTimerManager().SetTimer(TimerHandle_RespawnDelay, Delegate, RespawnDelay, false);
 	}
 
+	AValAICharacter* Minion = Cast<AValAICharacter>(VictimActor);
+	if (Minion)
+	{
+		AValCharacter* PlayerAsKiller = Cast<AValCharacter>(Killer);
+		if (PlayerAsKiller)
+		{
+			PlayerAsKiller->GrantCredits(Minion->GetCreditForKill());
+			UE_LOG(LogTemp, Log, TEXT("The player currently has %i credits."), PlayerAsKiller->GetCredits());
+		}
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("OnActorKilled: Victim: %s, Killer: %s"), *GetNameSafe(VictimActor),
 		*GetNameSafe(Killer));
 }
@@ -44,6 +56,7 @@ void AValGameModeBase::StartPlay()
 	// Actual amount of bots and whether its allowed to spawn determined by spawn logic later in the chain...
 	GetWorldTimerManager().SetTimer(TimerHandle_SpawnBots, this, &AValGameModeBase::SpawnBotTimerElapsed, SpawnTimerInterval, true);
 
+	SpawnCollectibles();
 }
 
 void AValGameModeBase::KillAll()
@@ -58,6 +71,16 @@ void AValGameModeBase::KillAll()
 			AttributeComp->Kill(this); // @fixme: pass in player? for kill credit
 		}
 	}	
+}
+
+void AValGameModeBase::SpawnCollectibles()
+{
+	UEnvQueryInstanceBlueprintWrapper* QueryInstance = UEnvQueryManager::RunEQSQuery(this,
+		SpawnBotQuery, this, EEnvQueryRunMode::AllMatching, nullptr);
+	if (ensure(QueryInstance))
+	{
+		QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &AValGameModeBase::OnSpawnCollectibleQueryCompleted);
+	}
 }
 
 void AValGameModeBase::SpawnBotTimerElapsed()
@@ -99,11 +122,11 @@ void AValGameModeBase::SpawnBotTimerElapsed()
 		SpawnBotQuery, this, EEnvQueryRunMode::RandomBest5Pct, nullptr);
 	if (ensure(QueryInstance))
 	{
-		QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &AValGameModeBase::OnQueryCompleted);
+		QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &AValGameModeBase::OnSpawnBotQueryCompleted);
 	}
 }
 
-void AValGameModeBase::OnQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus)
+void AValGameModeBase::OnSpawnBotQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus)
 {
 	if (QueryStatus != EEnvQueryStatus::Success)
 	{
@@ -120,6 +143,36 @@ void AValGameModeBase::OnQueryCompleted(UEnvQueryInstanceBlueprintWrapper* Query
 
 		// Track all the used spawn locations
 		DrawDebugSphere(GetWorld(), Locations[0], 50.0f, 20, FColor::Blue, false, 60.0f);
+	}
+}
+
+void AValGameModeBase::OnSpawnCollectibleQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus)
+{
+	if (QueryStatus != EEnvQueryStatus::Success)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Spawn Collectibles EQS Query Failed!"));
+		return;
+	}
+
+
+	TArray<FVector> Locations = QueryInstance->GetResultsAsLocations();
+	TSubclassOf<AActor> ClassToSpawn = HealthPotionClass;
+
+	//UE_LOG(LogTemp, Warning, TEXT("There are %i locations"), Locations.Num());
+
+	int NumSpawned = 0;
+	for (auto Location : Locations) {
+		Location.Z += 50;
+		GetWorld()->SpawnActor<AActor>(ClassToSpawn, Location, FRotator::ZeroRotator);
+
+		// Alternate between spawning health potions and coins
+		ClassToSpawn = ClassToSpawn == HealthPotionClass ? CoinClass : HealthPotionClass;
+
+		NumSpawned++;
+		if (NumSpawned == NumPotionsAndCreditsToSpawn*2)
+		{
+			break;
+		}
 	}
 }
 

@@ -10,6 +10,8 @@
 #include "BrainComponent.h"
 #include "ValWorldUserWidget.h"
 #include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "ValCharacter.h"
 
 // Sets default values
 AValAICharacter::AValAICharacter()
@@ -24,6 +26,8 @@ AValAICharacter::AValAICharacter()
 	GetMesh()->SetGenerateOverlapEvents(true);
 
 	TimeToHitParamName = "TimeToHit";
+
+	CreditForKill = 10;
 }
 
 void AValAICharacter::PostInitializeComponents()
@@ -57,6 +61,7 @@ void AValAICharacter::OnHealthChanged(AActor* InstigatorActor, UValAttributeComp
 
 		GetMesh()->SetScalarParameterValueOnMaterials("TimeToHit", GetWorld()->TimeSeconds);
 
+		// Died
 		if (NewHealth <= 0.0f)
 		{
 			// stop bt
@@ -69,6 +74,9 @@ void AValAICharacter::OnHealthChanged(AActor* InstigatorActor, UValAttributeComp
 			//ragdoll
 			GetMesh()->SetAllBodiesSimulatePhysics(true);
 			GetMesh()->SetCollisionProfileName("Ragdoll");
+
+			GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			GetCharacterMovement()->DisableMovement();
 
 			//set lifespan
 			SetLifeSpan(10.0f);
@@ -92,5 +100,10 @@ void AValAICharacter::OnPawnSeen(APawn* Pawn)
 
 	DrawDebugString(GetWorld(), GetActorLocation(), "PLAYER SPOTTED", nullptr,
 		FColor::White, 4.0f, true);
+}
+
+int AValAICharacter::GetCreditForKill()
+{
+	return CreditForKill;
 }
 

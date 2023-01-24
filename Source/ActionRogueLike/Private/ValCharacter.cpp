@@ -9,9 +9,10 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "ValInteractionComponent.h"
 #include "ValAttributeComponent.h"
+#include "ValActionComponent.h"
 #include <Kismet/KismetMathLibrary.h>
 #include <Kismet/GameplayStatics.h>
-
+#include "ValPlayerState.h"
 
 // Sets default values
 AValCharacter::AValCharacter()
@@ -30,6 +31,8 @@ AValCharacter::AValCharacter()
 
 	AttributeComp = CreateDefaultSubobject<UValAttributeComponent>("AttributeComp");
 
+	ActionComp = CreateDefaultSubobject<UValActionComponent>("ActionComp");
+
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	bUseControllerRotationYaw = false;
@@ -40,6 +43,11 @@ void AValCharacter::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	AttributeComp->OnHealthChanged.AddDynamic(this, &AValCharacter::OnHealthChanged);
+}
+
+FVector AValCharacter::GetPawnViewLocation() const
+{
+	return CameraComp->GetComponentLocation();
 }
 
 // Called when the game starts or when spawned
@@ -121,55 +129,27 @@ FVector AValCharacter::GetLocationBeingLookedAt() {
 
 void AValCharacter::PrimaryAttack()
 {
-	TimerDel.BindUFunction(this, FName("Attack_TimeElapsed"), DamageProjectileClass);
-	PreAttack();
+	ActionComp->StartActionByName(this, "PrimaryAttack");
 }
 
 void AValCharacter::SecondaryAttack()
 {
-	TimerDel.BindUFunction(this, FName("Attack_TimeElapsed"), GravityProjectileClass);
-	PreAttack();
+	ActionComp->StartActionByName(this, "Blackhole");
 }
 
-void AValCharacter::PreAttack()
-{	
-	FName HandSocketName = FName("Muzzle_01");
-	FVector HandLocation = GetMesh()->GetSocketLocation(HandSocketName);
-	//FVector HandLocation = FVector(0, 0, 500);
-	FRotator HandRotation = GetMesh()->GetSocketRotation(HandSocketName);
-	FTransform SpawnTM = FTransform(HandRotation, HandLocation);
-	
-	UGameplayStatics::SpawnEmitterAttached(ProjectileSpawnFX, GetMesh(), HandSocketName,
-		FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget);
-	
-	//UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ProjectileSpawnFX, SpawnTM);
-	
-	PlayAnimMontage(AttackAnim);
-	GetWorldTimerManager().SetTimer(TimerHandle_Attack, TimerDel, 0.2f, false);
-		
-}
-
-void AValCharacter::Attack_TimeElapsed(UClass* ChosenProjectileClass)
+void AValCharacter::TeleportAbility()
 {
-	if (ensure(ChosenProjectileClass))
-	{
-		// The teleport projectile travels a short distance before stopping, so its falloff
-		// distance is much smaller
-		FallOffDistance = ChosenProjectileClass == TeleportProjectileClass ? 700.f : 10000.f;
+	ActionComp->StartActionByName(this, "Dash");
+}
 
-		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
-		FVector TargetLocation = GetLocationBeingLookedAt();
+void AValCharacter::SprintStart()
+{
+	ActionComp->StartActionByName(this, "Sprint");
+}
 
-		FRotator ProjectileRot = UKismetMathLibrary::FindLookAtRotation(HandLocation, TargetLocation);
-
-		FTransform SpawnTM = FTransform(ProjectileRot, HandLocation);
-
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SpawnParams.Instigator = this;
-
-		GetWorld()->SpawnActor<AActor>(ChosenProjectileClass, SpawnTM, SpawnParams);
-	}
+void AValCharacter::SprintStop()
+{
+	ActionComp->StopActionByName(this, "Sprint");
 }
 
 void AValCharacter::PrimaryInteract()
@@ -181,12 +161,6 @@ void AValCharacter::PrimaryInteract()
 		
 		InteractionComp->PrimaryInteract(GetLocationBeingLookedAt());
 	}
-}
-
-void AValCharacter::TeleportAbility()
-{
-	TimerDel.BindUFunction(this, FName("Attack_TimeElapsed"), TeleportProjectileClass);
-	PreAttack();	
 }
 
 void AValCharacter::OnHealthChanged(AActor* InstigatorActor, UValAttributeComponent* OwningComp, float NewHealth, float Delta)
@@ -241,6 +215,9 @@ void AValCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &AValCharacter::PrimaryInteract);
 	PlayerInputComponent->BindAction("MovementAbility", IE_Pressed, this, &AValCharacter::TeleportAbility);
+	
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &AValCharacter::SprintStart);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &AValCharacter::SprintStop);
 }
 
 UValAttributeComponent* AValCharacter::GetAttributeComp()
@@ -251,5 +228,36 @@ UValAttributeComponent* AValCharacter::GetAttributeComp()
 void AValCharacter::HealSelf(float Amount /* = 100 */)
 {
 	AttributeComp->ApplyHealthChange(this, Amount);
+}
+
+void AValCharacter::GrantCredits(int CreditAmount)
+{
+	AValPlayerState* State = Cast<AValPlayerState>(GetPlayerState());
+	if (State)
+	{
+		State->UpdateCredits(CreditAmount);
+	}
+}
+
+int AValCharacter::GetCredits()
+{
+	AValPlayerState* State = Cast<AValPlayerState>(GetPlayerState());
+	if (State)
+	{
+		return State->GetCredits();
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("ERROR: The player has no player state."));
+	return -1;
+}
+
+bool AValCharacter::DeductCredits(int CreditAmount)
+{
+	AValPlayerState* State = Cast<AValPlayerState>(GetPlayerState());
+	if (State)
+	{
+		return State->DeductCredits(CreditAmount);
+	}
+	return false;
 }
 
