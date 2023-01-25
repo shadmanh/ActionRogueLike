@@ -8,6 +8,7 @@
 
 class UPawnSensingComponent;
 class UValAttributeComponent;
+class UValActionComponent;
 class UUserWidget;
 class UValWorldUserWidget;
 
@@ -43,6 +44,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UValAttributeComponent* AttributeComp;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UValActionComponent* ActionComp;
 	
 	void SetTargetActor(AActor* NewTarget);
 

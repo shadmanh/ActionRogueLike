@@ -10,6 +10,8 @@
 #include "ValAttributeComponent.h"
 #include <Kismet/GameplayStatics.h>
 #include "ValGameplayFunctionLibrary.h"
+#include "ValActionComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 // Sets default values
 AValMagicProjectile::AValMagicProjectile()
@@ -33,6 +35,8 @@ AValMagicProjectile::AValMagicProjectile()
 	LoopingSound = CreateDefaultSubobject <UAudioComponent>("LoopingSound");
 	LoopingSound->SetupAttachment(RootComponent);
 	ImpactSound = CreateDefaultSubobject <UAudioComponent>("ImpactSound");
+
+	DamageAmount = 20.f;
 	
 }
 
@@ -40,22 +44,17 @@ void AValMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponen
 {
 	if (OtherActor && OtherActor != GetInstigator())
 	{
-		/*
-		UValAttributeComponent* AttributeComp = Cast<UValAttributeComponent>(OtherActor->GetComponentByClass(UValAttributeComponent::StaticClass()));
-		if (AttributeComp)
+		UValActionComponent* ActionComp = Cast<UValActionComponent>(OtherActor->GetComponentByClass(UValActionComponent::StaticClass()));
+		if (ActionComp && ActionComp->ActiveGameplayTags.HasTag(ParryTag))
 		{
-			AttributeComp->ApplyHealthChange(GetInstigator(), -20.0f);
+			MovementComp->Velocity = -MovementComp->Velocity;
 
-			UGameplayStatics::PlaySoundAtLocation(this, ImpactSound->Sound, GetActorLocation());
-
-			UGameplayStatics::PlayWorldCameraShake(this, ShakeEffect, GetActorLocation(), 0, 1000.f);
-
-			Destroy();
+			SetInstigator(Cast<APawn>(OtherActor));
+			return;
 		}
-		*/
 
 		if (UValGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor,
-			20.f, SweepResult))
+			DamageAmount, SweepResult))
 		{
 
 			UGameplayStatics::PlaySoundAtLocation(this, ImpactSound->Sound, GetActorLocation());

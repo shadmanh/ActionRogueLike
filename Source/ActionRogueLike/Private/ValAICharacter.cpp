@@ -12,6 +12,7 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "ValCharacter.h"
+#include "ValActionComponent.h"
 
 // Sets default values
 AValAICharacter::AValAICharacter()
@@ -19,6 +20,8 @@ AValAICharacter::AValAICharacter()
 	PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>("PawnSensingComp");
 
 	AttributeComp = CreateDefaultSubobject<UValAttributeComponent>("AttributeComp");
+	
+	ActionComp = CreateDefaultSubobject<UValActionComponent>("ActionComp");
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	
