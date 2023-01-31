@@ -3,6 +3,7 @@
 
 #include "ValAttributeComponent.h"
 #include "ValGameModeBase.h"
+#include <Net/UnrealNetwork.h>
 
 static TAutoConsoleVariable<float> CVarDamageMultiplier(TEXT("val,DamageMultiplier"), 1.0f, TEXT("Global Damage Modifier for Attribute Component."), ECVF_Cheat);
 
@@ -15,6 +16,8 @@ UValAttributeComponent::UValAttributeComponent()
 	Rage = 0;
 	RageDamageRatio = 1;
 	BlackholeRageCost = -30;
+
+	SetIsReplicatedByDefault(true);
 }
 
 UValAttributeComponent* UValAttributeComponent::GetAttributes(AActor* FromActor)
@@ -89,7 +92,13 @@ bool UValAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float De
 	Health = FMath::Clamp(Health+Delta, 0.0f , HealthMax);
 
 	float ActualDelta = Health - OldHealth;
-	OnHealthChanged.Broadcast(InstigatorActor, this, Health, Delta);
+	
+	//OnHealthChanged.Broadcast(InstigatorActor, this, Health, Delta);
+
+	if (ActualDelta != 0.0f)
+	{
+		MulticastHealthChanged(InstigatorActor, Health, Delta);
+	}
 
 	UE_LOG(LogTemp, Log, TEXT("Health is % f"), Health);
 	
@@ -138,4 +147,17 @@ bool UValAttributeComponent::ApplyRageChange(float Delta)
 float UValAttributeComponent::GetBlackholeRageCost()
 {
 	return BlackholeRageCost;
+}
+
+void UValAttributeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UValAttributeComponent, Health);
+	DOREPLIFETIME(UValAttributeComponent, HealthMax);
+}
+
+void UValAttributeComponent::MulticastHealthChanged_Implementation(AActor* InstigatorActor, float NewHealth, float Delta)
+{
+	OnHealthChanged.Broadcast(InstigatorActor, this, NewHealth, Delta);
 }

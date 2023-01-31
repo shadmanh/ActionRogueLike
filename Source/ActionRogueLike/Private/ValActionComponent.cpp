@@ -9,6 +9,13 @@ UValActionComponent::UValActionComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
+void UValActionComponent::ServerStartAction_Implementation(AActor* Instigator, FName ActionName)
+{
+	StartActionByName(Instigator, ActionName);
+
+	SetIsReplicatedByDefault(true);
+}
+
 void UValActionComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -86,6 +93,12 @@ bool UValActionComponent::StartActionByName(AActor* Instigator, FName ActionName
 				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, FailedMsg);
 				continue;
 			}
+
+			if (!GetOwner()->HasAuthority())
+			{
+				ServerStartAction(Instigator, ActionName);
+			}
+
 			Action->StartAction(Instigator);
 			return true;
 		}
