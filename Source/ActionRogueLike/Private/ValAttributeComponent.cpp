@@ -11,6 +11,10 @@ UValAttributeComponent::UValAttributeComponent()
 {
 	HealthMax = 100;
 	Health = HealthMax;
+	RageMax = 100;
+	Rage = 0;
+	RageDamageRatio = 1;
+	BlackholeRageCost = -30;
 }
 
 UValAttributeComponent* UValAttributeComponent::GetAttributes(AActor* FromActor)
@@ -86,7 +90,7 @@ bool UValAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float De
 
 	float ActualDelta = Health - OldHealth;
 	OnHealthChanged.Broadcast(InstigatorActor, this, Health, Delta);
-		
+
 	UE_LOG(LogTemp, Log, TEXT("Health is % f"), Health);
 	
 	// Died
@@ -105,4 +109,33 @@ bool UValAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float De
 bool UValAttributeComponent::IsMaxHealth()
 {
 	return Health == HealthMax;
+}
+
+bool UValAttributeComponent::ApplyRageChange(float Delta)
+{
+	if (Delta < 0) {
+		Delta *= RageDamageRatio;
+	}
+
+	if (Delta + Rage < 0)
+	{
+		return false;
+	}
+
+	float OldRage = Rage;
+
+	Rage = FMath::Clamp(Rage+Delta, 0.0f , RageMax);
+
+	float ActualDelta = Rage - OldRage;
+	OnRageChanged.Broadcast(this, Rage, ActualDelta);
+		
+	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, FString::Printf(TEXT("Rage is %f"), Rage));
+	
+	return true;
+
+}
+
+float UValAttributeComponent::GetBlackholeRageCost()
+{
+	return BlackholeRageCost;
 }

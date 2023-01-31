@@ -12,6 +12,9 @@ class UValActionComponent;
 class UUserWidget;
 class UValWorldUserWidget;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTargetPawnChanged,
+APawn*, Player);
+
 UCLASS()
 class ACTIONROGUELIKE_API AValAICharacter : public ACharacter
 {
@@ -33,6 +36,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Effects")
 	FName TimeToHitParamName;
 
+	AActor* TargetActor;
+
 	virtual void PostInitializeComponents() override;
 
 	UFUNCTION()
@@ -48,6 +53,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UValActionComponent* ActionComp;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UValWorldUserWidget> SpottedPlayerWidgetClass;
+
+	UPROPERTY()
+	UValWorldUserWidget* SpottedPlayerWidgetInstance;
+	
 	void SetTargetActor(AActor* NewTarget);
 
 	UFUNCTION()
@@ -57,4 +68,7 @@ public:
 
 	UFUNCTION()
 	int GetCreditForKill();
+	
+	UPROPERTY(BlueprintAssignable)
+	FOnTargetPawnChanged OnTargetPawnChanged;
 };

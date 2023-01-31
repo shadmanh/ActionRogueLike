@@ -12,6 +12,7 @@
 #include "ValGameplayFunctionLibrary.h"
 #include "ValActionComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "ValActionEffect.h"
 
 // Sets default values
 AValMagicProjectile::AValMagicProjectile()
@@ -38,6 +39,7 @@ AValMagicProjectile::AValMagicProjectile()
 
 	DamageAmount = 20.f;
 	
+	SetReplicates(true);
 }
 
 void AValMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -56,6 +58,11 @@ void AValMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponen
 		if (UValGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor,
 			DamageAmount, SweepResult))
 		{
+
+			if (ActionComp)
+			{
+				ActionComp->AddAction(GetInstigator(), BurningActionClass);
+			}
 
 			UGameplayStatics::PlaySoundAtLocation(this, ImpactSound->Sound, GetActorLocation());
 

@@ -94,15 +94,29 @@ void AValAICharacter::SetTargetActor(AActor* NewTarget)
 	if (AIC)
 	{
 		AIC->GetBlackboardComponent()->SetValueAsObject("TargetActor", NewTarget);
+		TargetActor = NewTarget;
 	}
 }
 
 void AValAICharacter::OnPawnSeen(APawn* Pawn)
 {
-	SetTargetActor(Pawn);
-
-	DrawDebugString(GetWorld(), GetActorLocation(), "PLAYER SPOTTED", nullptr,
+	if (TargetActor != Pawn) {
+		SetTargetActor(Pawn);
+	
+		DrawDebugString(GetWorld(), GetActorLocation(), "PLAYER SPOTTED", nullptr,
 		FColor::White, 4.0f, true);
+
+		OnTargetPawnChanged.Broadcast(Pawn);
+		
+		if (SpottedPlayerWidgetInstance == nullptr && ensure(SpottedPlayerWidgetClass))
+		{
+			SpottedPlayerWidgetInstance = CreateWidget<UValWorldUserWidget>(GetWorld(), SpottedPlayerWidgetClass);
+			SpottedPlayerWidgetInstance->AttachedActor = this;
+			SpottedPlayerWidgetInstance->AddToViewport();
+
+		}
+
+	}
 }
 
 int AValAICharacter::GetCreditForKill()

@@ -13,6 +13,8 @@ ACollectible::ACollectible()
 	RootComponent = BaseMesh;
 
 	RespawnTime = 10.0f;
+	
+	SetReplicates(true);
 
 }
 

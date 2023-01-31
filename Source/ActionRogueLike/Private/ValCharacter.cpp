@@ -134,7 +134,9 @@ void AValCharacter::PrimaryAttack()
 
 void AValCharacter::SecondaryAttack()
 {
-	ActionComp->StartActionByName(this, "Blackhole");
+	if (GetAttributeComp()->ApplyRageChange(GetAttributeComp()->GetBlackholeRageCost())) {
+		ActionComp->StartActionByName(this, "Blackhole");
+	}
 }
 
 void AValCharacter::TeleportAbility()
@@ -159,7 +161,7 @@ void AValCharacter::PrimaryInteract()
 		// The interact distance shouldn't be too large
 		FallOffDistance = 1000.f;
 		
-		InteractionComp->PrimaryInteract(GetLocationBeingLookedAt());
+		InteractionComp->PrimaryInteract();
 	}
 }
 
@@ -167,6 +169,9 @@ void AValCharacter::OnHealthChanged(AActor* InstigatorActor, UValAttributeCompon
 {
 	if (Delta < 0.0f)
 	{
+
+		OwningComp->ApplyRageChange(-Delta);
+		
 		GetMesh()->SetScalarParameterValueOnMaterials("TimeToHit", GetWorld()->TimeSeconds);
 		
 		if (NewHealth <= 0.0f)

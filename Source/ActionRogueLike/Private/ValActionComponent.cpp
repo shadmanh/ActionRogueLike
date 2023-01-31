@@ -15,7 +15,7 @@ void UValActionComponent::BeginPlay()
 	
 	for (TSubclassOf<UValAction> ActionClass : DefaultActions)
 	{
-		AddAction(ActionClass);
+		AddAction(GetOwner(), ActionClass);
 	}
 }
 
@@ -27,7 +27,19 @@ void UValActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 	GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::White, DebugMsg);
 }
 
-void UValActionComponent::AddAction(TSubclassOf<UValAction> ActionClass)
+bool UValActionComponent::IsActionInside(UValAction* QueryAction)
+{
+	for (auto CurrentAction : Actions)
+	{
+		if (CurrentAction == QueryAction) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void UValActionComponent::AddAction(AActor* Instigator, TSubclassOf<UValAction> ActionClass)
 {
 	if (!ensure(ActionClass))
 	{
@@ -37,8 +49,29 @@ void UValActionComponent::AddAction(TSubclassOf<UValAction> ActionClass)
 	UValAction* NewAction = NewObject<UValAction>(this, ActionClass);
 	if (ensure(NewAction))
 	{
+		if (IsActionInside(NewAction))
+		{
+			return;
+		}
+
 		Actions.Add(NewAction);
+
+		if (NewAction->bAutoStart && ensure(NewAction->CanStart(Instigator)))
+		{
+			NewAction->StartAction(Instigator);
+		}
 	}
+}
+
+void UValActionComponent::RemoveAction(UValAction* ActionToRemove)
+{
+	if (!ensure(ActionToRemove && !ActionToRemove->IsRunning()))
+	{
+		return;
+	}
+
+	Actions.Remove(ActionToRemove);
+
 }
 
 bool UValActionComponent::StartActionByName(AActor* Instigator, FName ActionName)
