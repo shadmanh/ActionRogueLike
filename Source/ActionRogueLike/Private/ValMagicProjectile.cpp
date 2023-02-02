@@ -59,10 +59,12 @@ void AValMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponen
 			DamageAmount, SweepResult))
 		{
 
-			if (ActionComp)
+			if (ActionComp && HasAuthority())
 			{
 				ActionComp->AddAction(GetInstigator(), BurningActionClass);
 			}
+
+			UGameplayStatics::SpawnEmitterAtLocation(this, ImpactVFX, GetActorLocation(), GetActorRotation());
 
 			UGameplayStatics::PlaySoundAtLocation(this, ImpactSound->Sound, GetActorLocation());
 

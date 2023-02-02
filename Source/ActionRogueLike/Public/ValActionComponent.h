@@ -38,11 +38,14 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerStartAction(AActor* Instigator, FName ActionName);
 	
+	UFUNCTION(Server, Reliable)
+	void ServerStopAction(AActor* Instigator, FName ActionName);
+	
 	// Granted abilities at game start
 	UPROPERTY(EditAnywhere, Category = "Actions")
 		TArray<TSubclassOf<UValAction>> DefaultActions;
 
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	TArray<UValAction*> Actions;
 
 	virtual void BeginPlay() override;
@@ -52,5 +55,7 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	bool IsActionInside(UValAction* QueryAction);
+	
+	bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
 	
 };

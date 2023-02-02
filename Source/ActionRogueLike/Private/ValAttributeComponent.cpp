@@ -88,31 +88,32 @@ bool UValAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float De
 	}
 
 	float OldHealth = Health;
+	float NewHealth = FMath::Clamp(Health + Delta, 0.0f, HealthMax);
 
-	Health = FMath::Clamp(Health+Delta, 0.0f , HealthMax);
-
-	float ActualDelta = Health - OldHealth;
+	float ActualDelta = NewHealth - OldHealth;
 	
-	//OnHealthChanged.Broadcast(InstigatorActor, this, Health, Delta);
-
-	if (ActualDelta != 0.0f)
+	// Is Server?
+	if (GetOwner()->HasAuthority())
 	{
-		MulticastHealthChanged(InstigatorActor, Health, Delta);
-	}
+		Health = NewHealth;
 
-	UE_LOG(LogTemp, Log, TEXT("Health is % f"), Health);
-	
-	// Died
-	if (ActualDelta < 0.0f && Health == 0.0f)
-	{
-		AValGameModeBase* GM = GetWorld()->GetAuthGameMode<AValGameModeBase>();
-		if (GM)
+		if (ActualDelta != 0.0f)
 		{
-			GM->OnActorKilled(GetOwner(), InstigatorActor);
+			MulticastHealthChanged(InstigatorActor, Health, Delta);
 		}
-	}
+		
+		// Died
+		if (ActualDelta < 0.0f && Health == 0.0f)
+		{
+			AValGameModeBase* GM = GetWorld()->GetAuthGameMode<AValGameModeBase>();
+			if (GM)
+			{
+				GM->OnActorKilled(GetOwner(), InstigatorActor);
+			}
+		}
+	}	
 
-	return true;
+	return ActualDelta != 0;
 }
 
 bool UValAttributeComponent::IsMaxHealth()
@@ -161,3 +162,4 @@ void UValAttributeComponent::MulticastHealthChanged_Implementation(AActor* Insti
 {
 	OnHealthChanged.Broadcast(InstigatorActor, this, NewHealth, Delta);
 }
+

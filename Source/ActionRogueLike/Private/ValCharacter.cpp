@@ -167,6 +167,7 @@ void AValCharacter::PrimaryInteract()
 
 void AValCharacter::OnHealthChanged(AActor* InstigatorActor, UValAttributeComponent* OwningComp, float NewHealth, float Delta)
 {
+	// Damaged
 	if (Delta < 0.0f)
 	{
 
@@ -174,10 +175,13 @@ void AValCharacter::OnHealthChanged(AActor* InstigatorActor, UValAttributeCompon
 		
 		GetMesh()->SetScalarParameterValueOnMaterials("TimeToHit", GetWorld()->TimeSeconds);
 		
+		// Died
 		if (NewHealth <= 0.0f)
 		{
 			APlayerController* PC = Cast<APlayerController>(GetController());
 			DisableInput(PC);
+
+			SetLifeSpan(5.0f);
 		}
 	}
 }

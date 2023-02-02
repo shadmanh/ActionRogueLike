@@ -92,5 +92,5 @@ public:
 	bool IsMaxHealth();
 
 	float GetBlackholeRageCost();
-		
+	
 };

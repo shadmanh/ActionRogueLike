@@ -9,6 +9,20 @@
 
 class UWorld;
 
+USTRUCT()
+struct FActionRepData
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY()
+	bool bIsRunning;
+
+	UPROPERTY()
+	AActor* Instigator;
+};
+
 /**
  * 
  */
@@ -19,6 +33,9 @@ class ACTIONROGUELIKE_API UValAction : public UObject
 
 protected:
 
+	UPROPERTY(Replicated)
+	UValActionComponent* ActionComp;
+
 	// Tags added to owning actor when activated, removed when action stops
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTagContainer GrantsTags;
@@ -27,9 +44,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTagContainer BlockedTags;
 
-	bool bIsRunning;
+	UPROPERTY(ReplicatedUsing="OnRep_RepData")
+	FActionRepData RepData;
+
+	UFUNCTION()
+	void OnRep_RepData();
 
 public:
+
+	void Initialize(UValActionComponent* NewActionComp);
 
 	// Start immediately when added to an action component
 	UPROPERTY(EditDefaultsOnly, Category = "Action")
@@ -55,4 +78,9 @@ public:
 	FName ActionName;
 	
 	UWorld* GetWorld() const override;
+
+	bool IsSupportedForNetworking() const override
+	{
+		return true;
+	}
 };
