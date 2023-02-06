@@ -25,7 +25,7 @@ public:
 	bool DeductCredits(int CreditAmount);
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated)
 	int Credits;
 	
 };

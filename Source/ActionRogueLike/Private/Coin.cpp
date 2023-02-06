@@ -11,5 +11,6 @@ ACoin::ACoin()
 bool ACoin::DoEffect(AValCharacter* Player)
 {
 	Player->GrantCredits(CreditAmount);
+	UE_LOG(LogTemp, Log, TEXT("The player has %i credits."), Player->GetCredits());
 	return true;
 }

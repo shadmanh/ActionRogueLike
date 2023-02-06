@@ -52,7 +52,9 @@ protected:
 	void MoveRight(float Value);
 	FVector GetLocationBeingLookedAt();
 	void PrimaryAttack();
-	void SecondaryAttack();
+
+	UFUNCTION(Server, Reliable)
+	void ServerSecondaryAttack();
 	void SprintStart();
 	void SprintStop();	
 

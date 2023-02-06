@@ -132,7 +132,7 @@ void AValCharacter::PrimaryAttack()
 	ActionComp->StartActionByName(this, "PrimaryAttack");
 }
 
-void AValCharacter::SecondaryAttack()
+void AValCharacter::ServerSecondaryAttack_Implementation()
 {
 	if (GetAttributeComp()->ApplyRageChange(GetAttributeComp()->GetBlackholeRageCost())) {
 		ActionComp->StartActionByName(this, "Blackhole");
@@ -220,7 +220,7 @@ void AValCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
 
 	PlayerInputComponent->BindAction("PrimaryAttack", IE_Pressed, this, &AValCharacter::PrimaryAttack);
-	PlayerInputComponent->BindAction("SecondaryAttack", IE_Pressed, this, &AValCharacter::SecondaryAttack);
+	PlayerInputComponent->BindAction("SecondaryAttack", IE_Pressed, this, &AValCharacter::ServerSecondaryAttack);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &AValCharacter::PrimaryInteract);
 	PlayerInputComponent->BindAction("MovementAbility", IE_Pressed, this, &AValCharacter::TeleportAbility);

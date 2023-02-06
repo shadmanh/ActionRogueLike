@@ -2,6 +2,7 @@
 
 
 #include "Collectible.h"
+#include <Net/UnrealNetwork.h>
 
 // Sets default values
 ACollectible::ACollectible()
@@ -42,12 +43,7 @@ void ACollectible::Interact_Implementation(APawn* InstigatorPawn)
 
 			if (DoEffect(PlayerCharacter))
 			{
-				IsActive = false;
-				BaseMesh->SetVisibility(false);
-				FTimerHandle TimerHandle_Health;
-				GetWorldTimerManager().SetTimer(TimerHandle_Health, this,
-					&ACollectible::SetActive, RespawnTime);
-				UE_LOG(LogTemp, Log, TEXT("The player has %i credits."), PlayerCharacter->GetCredits());
+				MulticastInteractSuccessful();
 			}
 		}
 	}
@@ -58,8 +54,25 @@ bool ACollectible::DoEffect(AValCharacter* Player)
 	return false;
 }
 
-void ACollectible::SetActive()
+void ACollectible::SetActive(bool Flag)
 {
-	IsActive = true;
-	BaseMesh->SetVisibility(true);
+	IsActive = Flag;
+	BaseMesh->SetVisibility(Flag);
+}
+
+void ACollectible::MulticastInteractSuccessful_Implementation()
+{
+	SetActive(false);
+	FTimerHandle TimerHandle_Health;
+	FTimerDelegate Delegate;
+	Delegate.BindUFunction(this, "SetActive", true);
+	GetWorldTimerManager().SetTimer(TimerHandle_Health, Delegate, RespawnTime, false);
+}
+
+void ACollectible::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ACollectible, IsActive);
+	DOREPLIFETIME(ACollectible, BaseMesh);
 }

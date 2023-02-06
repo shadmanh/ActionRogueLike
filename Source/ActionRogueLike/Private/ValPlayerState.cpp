@@ -2,6 +2,7 @@
 
 
 #include "ValPlayerState.h"
+#include <Net/UnrealNetwork.h>
 
 AValPlayerState::AValPlayerState()
 {
@@ -26,4 +27,11 @@ bool AValPlayerState::DeductCredits(int CreditAmount)
 		return true;
 	}
 	return false;
+}
+
+void AValPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AValPlayerState, Credits);
 }

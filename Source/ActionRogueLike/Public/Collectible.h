@@ -17,9 +17,10 @@ public:
 	ACollectible();
 
 protected:
+	UPROPERTY(VisibleAnywhere, Replicated)
 	bool IsActive = true;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, Replicated)
 	UStaticMeshComponent* BaseMesh;
 
 	UPROPERTY(EditDefaultsOnly)
@@ -36,6 +37,9 @@ public:
 
 	virtual bool DoEffect(AValCharacter* Player);
 
-	void SetActive();
+	UFUNCTION()
+	void SetActive(bool Flag);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastInteractSuccessful();
 };

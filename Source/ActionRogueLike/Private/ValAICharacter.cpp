@@ -110,13 +110,17 @@ void AValAICharacter::OnPawnSeen(APawn* Pawn)
 		
 		if (SpottedPlayerWidgetInstance == nullptr && ensure(SpottedPlayerWidgetClass))
 		{
-			SpottedPlayerWidgetInstance = CreateWidget<UValWorldUserWidget>(GetWorld(), SpottedPlayerWidgetClass);
-			SpottedPlayerWidgetInstance->AttachedActor = this;
-			SpottedPlayerWidgetInstance->AddToViewport();
-
+			MulticastSpawnSpottedPlayerWidget();
 		}
-
 	}
+}
+
+void AValAICharacter::MulticastSpawnSpottedPlayerWidget_Implementation()
+{
+	SpottedPlayerWidgetInstance = CreateWidget<UValWorldUserWidget>(GetWorld(), SpottedPlayerWidgetClass);
+	SpottedPlayerWidgetInstance->AttachedActor = this;
+	SpottedPlayerWidgetInstance->AddToViewport();
+
 }
 
 int AValAICharacter::GetCreditForKill()

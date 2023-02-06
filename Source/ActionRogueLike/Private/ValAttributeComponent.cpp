@@ -134,14 +134,24 @@ bool UValAttributeComponent::ApplyRageChange(float Delta)
 
 	float OldRage = Rage;
 
-	Rage = FMath::Clamp(Rage+Delta, 0.0f , RageMax);
+	float NewRage = FMath::Clamp(Rage+Delta, 0.0f , RageMax);
 
-	float ActualDelta = Rage - OldRage;
-	OnRageChanged.Broadcast(this, Rage, ActualDelta);
-		
-	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, FString::Printf(TEXT("Rage is %f"), Rage));
+	float ActualDelta = NewRage - OldRage;
 	
-	return true;
+	// Is Server?
+	if (GetOwner()->HasAuthority())
+	{
+		Rage = NewRage;
+
+		if (ActualDelta != 0.0f)
+		{
+			MulticastRageChanged(Rage, ActualDelta);
+		}
+		
+		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Red, FString::Printf(TEXT("Rage is %f"), Rage));
+	}	
+	
+	return ActualDelta != 0;
 
 }
 
@@ -161,5 +171,12 @@ void UValAttributeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty
 void UValAttributeComponent::MulticastHealthChanged_Implementation(AActor* InstigatorActor, float NewHealth, float Delta)
 {
 	OnHealthChanged.Broadcast(InstigatorActor, this, NewHealth, Delta);
+}
+
+void UValAttributeComponent::MulticastRageChanged_Implementation(float NewRage, float Delta)
+{
+	OnRageChanged.Broadcast(this, NewRage, Delta);
+
+	// FIX THIS, clients aren't allowed to use black holes anymore even if they have enough rage
 }
 
