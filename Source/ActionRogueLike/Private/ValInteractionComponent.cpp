@@ -78,6 +78,7 @@ void UValInteractionComponent::FindBestInteractable()
 		if (DefaultWidgetInstance)
 		{
 			DefaultWidgetInstance->AttachedActor = FocusedActor;
+			DefaultWidgetInstance->SetVisibility(ESlateVisibility::Visible);
 
 			if (!DefaultWidgetInstance->IsInViewport())
 			{
@@ -90,6 +91,14 @@ void UValInteractionComponent::FindBestInteractable()
 			{
 				DefaultWidgetInstance->RemoveFromParent();
 			}
+		}
+	}
+
+	else
+	{
+		if (DefaultWidgetInstance)
+		{
+			DefaultWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
 		}
 	}
 

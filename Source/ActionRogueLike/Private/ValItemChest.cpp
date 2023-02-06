@@ -28,6 +28,11 @@ void AValItemChest::OnRep_LidOpened()
 	LidMesh->SetRelativeRotation(FRotator(CurrPitch, 0, 0));
 }
 
+void AValItemChest::OnActorLoaded_Implementation()
+{
+	OnRep_LidOpened();
+}
+
 void AValItemChest::Interact_Implementation(APawn* InstigatorPawn)
 {
 	bLidOpened = !bLidOpened;

@@ -3,6 +3,7 @@
 
 #include "ValPlayerState.h"
 #include <Net/UnrealNetwork.h>
+#include "ValSaveGame.h"
 
 AValPlayerState::AValPlayerState()
 {
@@ -27,6 +28,22 @@ bool AValPlayerState::DeductCredits(int CreditAmount)
 		return true;
 	}
 	return false;
+}
+
+void AValPlayerState::SavePlayerState_Implementation(UValSaveGame* SaveObject)
+{
+	if (SaveObject)
+	{
+		SaveObject->Credits = Credits;
+	}
+}
+
+void AValPlayerState::LoadPlayerState_Implementation(UValSaveGame* SaveObject)
+{
+	if (SaveObject)
+	{
+		Credits = SaveObject->Credits;
+	}
 }
 
 void AValPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

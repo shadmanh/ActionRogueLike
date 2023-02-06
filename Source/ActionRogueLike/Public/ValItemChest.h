@@ -24,7 +24,7 @@ public:
 
 protected:
 
-	UPROPERTY(ReplicatedUsing="OnRep_LidOpened", BlueprintReadOnly) // RepNotify
+	UPROPERTY(ReplicatedUsing="OnRep_LidOpened", BlueprintReadOnly, SaveGame) // RepNotify
 	bool bLidOpened;
 
 	UFUNCTION()
@@ -39,4 +39,5 @@ protected:
 public:
 	void Interact_Implementation(APawn* InstigatorPawn) override;
 
+	void OnActorLoaded_Implementation();
 };

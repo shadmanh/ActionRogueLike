@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerState.h"
 #include "ValPlayerState.generated.h"
 
+class UValSaveGame;
+
 /**
  * 
  */
@@ -24,8 +26,14 @@ public:
 
 	bool DeductCredits(int CreditAmount);
 
+	UFUNCTION(BlueprintNativeEvent)
+	void SavePlayerState(UValSaveGame* SaveObject);
+
+	UFUNCTION(BlueprintNativeEvent)
+	void LoadPlayerState(UValSaveGame* SaveObject);
+
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated)
-	int Credits;
+	int32 Credits;
 	
 };

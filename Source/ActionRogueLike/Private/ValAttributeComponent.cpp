@@ -180,3 +180,8 @@ void UValAttributeComponent::MulticastRageChanged_Implementation(float NewRage, 
 	// FIX THIS, clients aren't allowed to use black holes anymore even if they have enough rage
 }
 
+float UValAttributeComponent::GetRageDamageRatio()
+{
+	return RageDamageRatio;
+}
+

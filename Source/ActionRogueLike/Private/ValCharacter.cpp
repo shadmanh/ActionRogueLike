@@ -135,8 +135,15 @@ void AValCharacter::PrimaryAttack()
 void AValCharacter::ServerSecondaryAttack_Implementation()
 {
 	if (GetAttributeComp()->ApplyRageChange(GetAttributeComp()->GetBlackholeRageCost())) {
-		ActionComp->StartActionByName(this, "Blackhole");
+	
+		// Refund cost if action could not be started
+		if (!ActionComp->StartActionByName(this, "Blackhole"))
+		{
+			GetAttributeComp()->ApplyRageChange(
+				(-1)*GetAttributeComp()->GetBlackholeRageCost()*GetAttributeComp()->GetRageDamageRatio());
+		}
 	}
+
 }
 
 void AValCharacter::TeleportAbility()
