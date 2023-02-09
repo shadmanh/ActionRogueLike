@@ -70,6 +70,8 @@ protected:
 	UFUNCTION()
 	void RespawnPlayerElapsed(AController* Controller);
 
+	void ShuffleArray(TArray<FVector>* Array);
+
 public:
 
 	virtual void OnActorKilled(AActor* VictimActor, AActor* Killer);

@@ -21,7 +21,7 @@ static TAutoConsoleVariable<bool> CVarSpawnBots(TEXT("val.SpawnBots"), true, TEX
 AValGameModeBase::AValGameModeBase()
 {
 	SpawnTimerInterval = 2.0f;
-	NumPotionsAndCreditsToSpawn = 10;
+	NumPotionsAndCreditsToSpawn = 30;
 
 	SlotName = "SaveGame01";
 }
@@ -186,6 +186,7 @@ void AValGameModeBase::OnSpawnCollectibleQueryCompleted(UEnvQueryInstanceBluepri
 	//UE_LOG(LogTemp, Warning, TEXT("There are %i locations"), Locations.Num());
 
 	int NumSpawned = 0;
+	ShuffleArray(&Locations);
 	for (auto Location : Locations) {
 		Location.Z += 50;
 		GetWorld()->SpawnActor<AActor>(ClassToSpawn, Location, FRotator::ZeroRotator);
@@ -208,6 +209,15 @@ void AValGameModeBase::RespawnPlayerElapsed(AController* Controller)
 		Controller->UnPossess();
 
 		RestartPlayer(Controller);
+	}
+}
+
+void AValGameModeBase::ShuffleArray(TArray<FVector>* Array)
+{
+	for (int i = 0; i < Array->Num(); ++i)
+	{
+		int Index = rand() % (Array->Num() - i) + i;
+		Array->Swap(i, Index);
 	}
 }
 

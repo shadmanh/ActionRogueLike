@@ -13,9 +13,9 @@ UValAttributeComponent::UValAttributeComponent()
 	HealthMax = 100;
 	Health = HealthMax;
 	RageMax = 100;
-	Rage = 0;
+	Rage = 50;
 	RageDamageRatio = 1;
-	BlackholeRageCost = -30;
+	BlackholeRageCost = -5;
 
 	SetIsReplicatedByDefault(true);
 }
